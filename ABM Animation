@@ -1,0 +1,90 @@
+#Step 1: Importing the files and operators necassary for the agent based model.
+import matplotlib
+import tkinter
+matplotlib.use('TkAgg')
+import matplotlib.pyplot
+import matplotlib.animation 
+import agentframework
+
+#Step 2: Creating the environment for agents to be placed in. 
+environment=[]
+rowlist=["rowlist"]
+#Step 3: Using the 'in.txt' file to create coordinates for the output space.
+with open('in.txt') as f:
+    for row in f:
+        parsed_line = str.split(row,",")
+        rowlist=[]
+        for coordinate in parsed_line:
+            rowlist.append(float(coordinate))
+        environment.append(rowlist)
+
+#Step 4: Creating parameters for the overall model; number of agents, and the distance at which they share 'food' (neighbourhood).
+num_of_agents = 50
+neighbourhood = 5
+agents = []
+
+#Step 5: Creation of the output plot; axis, colours and size.
+fig = matplotlib.pyplot.figure(figsize=(7, 7))
+ax = fig.add_axes([0, 0, 1, 1])
+
+
+#Step 6 Making the agents; taking the agent class from 'agentframwork' and adding it to the environment as well as future functions.
+for i in range(num_of_agents):
+    agents.append(agentframework.Agent(environment, agents))
+carry_on = True	
+
+#Step 7: Making the agents actually move, eat and interact with each other on the output plot.
+def update(frame_number):
+    
+    fig.clear()   
+    global carry_on
+    for i in range(num_of_agents):
+        agents[i].move()
+        agents[i].eat ()
+        agents[i].share_with_neighbours(neighbourhood)
+
+        
+#Step 8: This section puts the agents on the output plot, the line 57 pulls the integer parameterised in line 23 (Step 4)
+#        lines 60 and 61 limit the x and y axis from 0-99 respectively, line 62 shows the environment on the plot
+    for i in range(num_of_agents):
+        matplotlib.pyplot.scatter(agents[i].x,agents[i].y)
+    matplotlib.pyplot.xlim(0, 99)
+    matplotlib.pyplot.ylim(0, 99)
+    matplotlib.pyplot.imshow(environment)
+    
+
+# Step 9: This is a general function allowing code to loop. each loop +1 is added to the 'a' variable, yield is the stopping function.
+#         The model will run until 'a' reaches the number defined in line 63.
+def gen_function(b = [0]):
+    a = 0
+    global carry_on 
+    while (a < 100)& (carry_on) :  
+        yield a			
+        a = a + 1
+
+
+#Step 10: Purely the animation function allowing for agents to be animated in the output.
+animation = matplotlib.animation.FuncAnimation(fig, update, frames=gen_function, repeat=False)
+
+
+#Step 11: Creating a function to actually run the model and animation in conjunction.
+def run():
+    animation = matplotlib.animation.FuncAnimation(fig, update, frames=gen_function, repeat=False)
+    canvas.draw()
+
+    
+    
+# Creating General User Interface
+#Step 12: Code block creating a general user interface (gui). Tkinter is the standard gui for python.
+#         Could use others such as guidata or PySimpleGUI.
+root = tkinter.Tk()
+root.wm_title("Model")
+menubar = tkinter.Menu(root)
+root.config(menu=menubar)
+model_menu = tkinter.Menu(menubar)
+menubar.add_cascade(label="Model", menu=model_menu)
+model_menu.add_command(label="Run model", command=run, state="normal") 
+canvas = matplotlib.backends.backend_tkagg.FigureCanvasTkAgg(fig, master=root)
+canvas._tkcanvas.pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+
+tkinter.mainloop()
